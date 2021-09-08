@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
-VisualStudioVersion = 16.0.30621.155
+VisualStudioVersion = 16.0.31624.102
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "VideoPlayer", "VideoPlayer.pyproj", "{482D93D3-8287-4C80-A47D-162C3CE37A8C}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Open Driver", "Open Driver.pyproj", "{39141A25-5F97-4958-9441-C7CC5628AF93}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,13 +11,13 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{482D93D3-8287-4C80-A47D-162C3CE37A8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{482D93D3-8287-4C80-A47D-162C3CE37A8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39141A25-5F97-4958-9441-C7CC5628AF93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39141A25-5F97-4958-9441-C7CC5628AF93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {8D74D7A0-8661-4C44-9E3C-A56CEF50E0E0}
+		SolutionGuid = {B01C599E-4470-4877-B75D-DBC3AF9A2504}
 	EndGlobalSection
 EndGlobal

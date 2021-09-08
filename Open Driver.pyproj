@@ -2,15 +2,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>482d93d3-8287-4c80-a47d-162c3ce37a8c</ProjectGuid>
+    <ProjectGuid>39141a25-5f97-4958-9441-c7cc5628af93</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>VideoPlayer.py</StartupFile>
+    <StartupFile>Open_Driver.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
-    <Name>VideoPlayer</Name>
-    <RootNamespace>VideoPlayer</RootNamespace>
+    <Name>Open Driver</Name>
+    <RootNamespace>Open Driver</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,7 +21,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="VideoPlayer.py" />
+    <Compile Include="Open_Driver.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
