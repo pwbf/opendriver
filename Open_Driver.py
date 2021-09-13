@@ -20,6 +20,9 @@ smooth_play = 100    #1~100
 time_delay_margin = 1
 
 speed_mapping = []
+signal_mapping = []
+#signal_name = ['開車','出發','進站','閉塞','預告','反應燈','信號限速','傾斜式限速','一般限速','接近','停車']
+signal_name = ['All Green','Departure','Arrival','Block','Distance','Remote','Signal Speed','Tilt Speed','General Speed','Approach','Stop']
 video_speed = 1   #Real Speed inside video
 game_speed = 0   #km/h
 vehicle_accel = 0   #km/h/s
@@ -108,6 +111,7 @@ def vplayer():
     global vehicle_accel
     global throttle
     global time_delay
+    global signal_mapping
 
     global fcount
     global distance
@@ -126,17 +130,30 @@ def vplayer():
             while(game_speed == 0 and fcount > 1) or (fps <= 0.3):
                 frame = copy.copy(current_frame)
                 cv2.waitKey(1)
-                cv2.putText(frame, '[Taipei -> Songshan] #408: ' + str(distance - int(fcount/fps_default)) + 'm, fps:' + str(fps),(50, 20), font, 0.5, (0, 0, 255))
+                cv2.putText(frame, '[Taipei -> Songshan] #408: ' + str(distance - int(fcount/fps_default)) + 'm',(50, 20), font, 0.5, (0, 0, 255))
                 cv2.putText(frame, '[Stationary] Fcount: ' + str(fcount) + ' fps:' + str(fps)  + ' TM: stationary',(50, 50), font, 0.5, (0, 0, 255))
                 cv2.putText(frame, 'Throttle: ' + str(ac_name[throttle]) +' CoreSpeed: '+ str(game_speed) +' video_speed: '+str(video_speed), (50, 100), font, 0.5, (0, 0, 255))
                 cv2.imshow(frameName,frame)
 
         else:
+            y_coord = 150
             time_delay = 1 / fps
             distance_passed += game_speed*1000/3600*time_delay
-            cv2.putText(frame, '[Taipei -> Songshan] #408: ' + str(distance - int(distance_passed)) + 'm, fps:' + str(fps),(50, 20), font, 0.5, (0, 255, 255))
+            cv2.putText(frame, '[Taipei -> Songsang] #408: ' + str(distance - int(distance_passed)) + 'm',(50, 20), font, 0.5, (0, 255, 255))
             cv2.putText(frame, '[Moving] Fcount: ' + str(fcount) + ' fps:' + str(fps)  + ' TM: '+str(mfloor(fcount/fps_default)),(50, 50), font, 0.5, (0, 255, 255))
             cv2.putText(frame, 'Throttle: ' + str(ac_name[throttle]) +' CoreSpeed: '+ str(game_speed) +'km/h (acc: '+str(vehicle_accel)+') video_speed: '+str(video_speed), (50, 100), font, 0.5, (0, 255, 255))
+            for index, signals in enumerate(signal_mapping[mfloor(fcount/fps_default)]):
+                #print('Index: '+str(index)+' Signal:'+str(signal_name[index])+': '+str(str(signals)))
+                if(signals != 'NULL'):
+                    if(signals == 'ALL_RIGHT'):
+                        cv2.putText(frame, str(signal_name[index])+': ' + str(signals), (50, y_coord), font, 1, (0, 255, 0))
+                    elif(signals == 'CAUTION'):
+                        cv2.putText(frame, str(signal_name[index])+': ' + str(signals), (50, y_coord), font, 1, (0, 255, 255))
+                    elif(signals == 'DANGER'):
+                        cv2.putText(frame, str(signal_name[index])+': ' + str(signals), (50, y_coord), font, 1, (0, 0, 255))
+                    else:
+                        cv2.putText(frame, str(signal_name[index])+': ' + str(signals), (50, y_coord), font, 1, (255, 0, 255))
+                    y_coord += 30
                 
             cv2.imshow(frameName, frame)
             cv2.waitKey(1)
@@ -165,11 +182,26 @@ for index, sub in enumerate(r):
         for i in range(r[index].start.seconds):
             speed_mapping.append(int(sub.content))
 
-#print(speed_mapping)            
+file = open("signalMapping.srt")
+line = file.read()
+file.close()
+r = list(srt.parse(line))
+
+for index, sub in enumerate(r):
+    if(index+1 < len(r)):
+        #print("Sec(Shifted): "+str(r[index+1].start.seconds)+" Speed:"+str(int(r[index].content)))
+        for i in range(r[index+1].start.seconds - r[index].start.seconds):
+            signal_mapping.append((r[index].content).split('-'))
+    else:
+        #print("Sec(Non Shifted): "+str(r[index].start.seconds)+" Speed:"+str(int(sub.content)))
+        for i in range(r[index].start.seconds):
+            signal_mapping.append((sub.content).split('-'))
+
+#print(signal_mapping)            
 print('Initialized')     
 
-#開車-出發-閉塞-預告-反應燈-傾斜式限速-一般限速
-#ALL_RIGHT-ALL_RIGHT-NULL-NULL-45-45
+#開車-出發-進站-閉塞-預告-反應燈-信號限速-傾斜式限速-一般限速-接近-停車
+#ALL_RIGHT-ALL_RIGHT-NULL-NULL-NULL-NULL-45-45-NULL-NULL
 
 threading.Thread(target = vplayer).start()
 threading.Thread(target = keyboard_input).start()
