@@ -38,7 +38,7 @@ distance_passed = 0 #meters
 ac_name = ['EB', 'B7', 'B6', 'B5','B4','B3','B2','B1', 'IDLE', 'P1', 'P2', 'P3', 'P4', 'P5']
 ac_ctrl = [-4.32, -3.6, -3.1, -2.6, -2.1, -1.6, -1.1, -0.6, 0, 0.5, 0.7, 1.1, 1.3, 1.8]
 ac_threshold = [60, 55, 50, 45, 40, -35, 20, 10, 0, 30, 50, 70, 90, 110]
-throttle = 8
+throttle = 0
 #0  1  2  3  4  5  6  7    8  9  10 11 12 13
 #EB B7 B6 B5 B4 B3 B2 B1 IDLE P1 P2 P3 P4 P5
 #-8 -7 -6 -5 -4 -3 -2 -1   0  +1 +2 +3 +4 +5
@@ -118,7 +118,7 @@ def acclerator():
             game_speed = vehicle_max
 
         game_speed = round(game_speed,3)
-        game_speed = video_speed
+        #game_speed = video_speed
         if game_speed != 0:
             fps = (game_speed * fps_default) / video_speed
             #fps = 60
