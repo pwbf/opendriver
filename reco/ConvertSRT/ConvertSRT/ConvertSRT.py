@@ -40,8 +40,9 @@ for line in Lines:
         speed_now = speed_old
 
 time_se = np.roll(time_se, -1)
+print(time_se)
 for e in range(len(time_se)-1):
-    #print(str(time_se[e]) + ' -> ' + str(spd_lst[e]))
+    print(str(time_se[e]) + ' -> ' + str(spd_lst[e]))
 
     print(str(e + 1))
     print(str(time_se[e][0])+',001 --> '+str(time_se[e][1])+',000')
@@ -51,5 +52,5 @@ for e in range(len(time_se)-1):
     with open("421_ttn_yul.srt", "a") as myfile:
         myfile.write(str(e + 1)+'\n')
         myfile.write(str(time_se[e][0])+',001 --> '+str(time_se[e][1])+',000\n')
-        myfile.write(str(speed_now)+'\n')
+        myfile.write(str(spd_lst[e])+'\n')
         myfile.write('\n')
