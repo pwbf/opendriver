@@ -125,7 +125,7 @@ def acclerator():
         print("Fixed Acc:"+str(round(vehicle_accel, 5))+" Target Acc:"+str(round(va, 5))+" facX:"+str(round(facX, 5))+" factor:"+str(round(factor, 5)))
         
         game_speed += vehicle_accel
-        #game_speed = video_speed
+        game_speed = video_speed
         if game_speed <= 0:
             game_speed = 0
 
@@ -199,7 +199,7 @@ def vplayer():
             time_delay = 1 / fps
             distance_passed += (game_speed*1000/3600)*time_delay
             cv2.putText(frame, '['+StaStart+' -> '+StaEnd+'] #'+TrainNo+': ' + str(int(distance) - int(distance_passed)) + 'm',(50, 50), font, 1, (0, 0, 255))
-            cv2.putText(frame, 'Throttle: '+ str(ac_name[throttle]) +' Accleration: ' + str(round(vehicle_accel, 5)) + ' Speed:' + str(game_speed)+' km/h', (50, 1000), font, 1, (0, 255, 255))
+            cv2.putText(frame, 'Throttle: '+ str(ac_name[throttle]) +' Accleration: ' + str(round(vehicle_accel, 5)) + ' Speed:' + str(game_speed)+' km/h Video Speed: '+str(video_speed)+' km/h', (50, 1000), font, 1, (0, 255, 255))
 
             if signal_mapping:
                 for index, signals in enumerate(signal_mapping[mfloor(fcount/fps_default)]):
