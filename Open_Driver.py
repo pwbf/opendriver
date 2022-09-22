@@ -4,13 +4,17 @@ import msvcrt
 import copy
 import srt
 import numpy as np 
-from PIL import Image, ImageDraw,ImageFont 
+import pathlib
+#from PIL import Image, ImageDraw,ImageFont 
 from pynput import keyboard
 from math import floor as mfloor
 from math import log as mlog
 from time import time as timer
 from time import sleep as times
 import configparser
+
+#settings
+TESTMODE = True
 
 #Main Codes
 config = configparser.ConfigParser()
@@ -26,6 +30,22 @@ StaDistance = str(TrainConf['StaDistance'])
 TrainNo = str(TrainConf['TrainNo'])
 
 StartupCheck = False
+
+class signalImage:
+    def __init__(self):
+        self.pathbase = str(pathlib.Path(__file__).parent.resolve())
+        self.sl0 = cv2.imread(self.pathbase + '\\asset\\sl0.png', -1)
+        self.sl1 = cv2.imread(self.pathbase + '\\asset\\sl1.png', -1)
+        self.sl2 = cv2.imread(self.pathbase + '\\asset\\sl2.png', -1)
+        self.dep0 = cv2.imread(self.pathbase + '\\asset\\dep0.png', -1)
+        self.dep1 = cv2.imread(self.pathbase + '\\asset\\dep1.png', -1)
+        self.block0 = cv2.imread(self.pathbase + '\\asset\\block0.png', -1)
+        self.block1 = cv2.imread(self.pathbase + '\\asset\\block1.png', -1)
+        self.block2 = cv2.imread(self.pathbase + '\\asset\\block2.png', -1)
+        self.block3 = cv2.imread(self.pathbase + '\\asset\\block3.png', -1)
+        self.dis0 = cv2.imread(self.pathbase + '\\asset\\dis0.png', -1)
+        self.dis1 = cv2.imread(self.pathbase + '\\asset\\dis1.png', -1)
+        self.dis2 = cv2.imread(self.pathbase + '\\asset\\dis2.png', -1)
 
 kch = ''
 fps_default = 60
@@ -46,6 +66,7 @@ video_speed = 1   #Real Speed inside video
 game_speed = 0   #km/h
 vehicle_accel = 0   #km/h/s
 vehicle_max = 140   #km/h
+idle_factor = -0.2  #km/h/s
 
 distance = StaDistance #meters
 distance_passed = 0 #meters
@@ -53,9 +74,9 @@ distance_passed = 0 #meters
 jump_frame = 0
 
 ac_name = ['EB', 'B7', 'B6', 'B5','B4','B3','B2','B1', 'IDLE', 'P1', 'P2', 'P3', 'P4', 'P5']
-ac_ctrl = [-4.32, -3.6, -3.1, -2.6, -2.1, -1.6, -1.1, -0.6, 0, 0.5, 0.7, 1.1, 1.3, 1.8]
+ac_ctrl = [-4.32, -3.6, -3.1, -2.6, -2.1, -1.6, -1.1, -0.6, 0, 0.5, 0.7, 1.1, 1.3, 1.8]     #km/h/s
 ac_threshold = [80, 60, 50, 45, 40, 35, 20, 10, 0, 40, 60, 80, 100, 130]
-throttle = 8
+throttle = 1
 #0  1  2  3  4  5  6  7    8  9  10 11 12 13
 #EB B7 B6 B5 B4 B3 B2 B1 IDLE P1 P2 P3 P4 P5
 #-8 -7 -6 -5 -4 -3 -2 -1   0  +1 +2 +3 +4 +5
@@ -63,6 +84,7 @@ throttle = 8
 def on_press(key):
     global kch
     global throttle
+    global TESTMODE
 
     try:
         kch = key.char
@@ -81,6 +103,11 @@ def on_press(key):
         else:
             throttle -= 1
 
+    if kch == 't':
+        TESTMODE = not TESTMODE
+        if(TESTMODE):
+            throttle = 8
+
 
 def acclerator():
     global throttle
@@ -93,6 +120,7 @@ def acclerator():
     global fps
     global fcount
     global time_delay
+    global TESTMODE
 
     state_stop = True
     factor = 1
@@ -100,7 +128,7 @@ def acclerator():
 
         video_speed = speed_mapping[mfloor(fcount/fps_default)]
 
-        vehicle_accel = (ac_ctrl[throttle]/smooth_play)
+        vehicle_accel = ((ac_ctrl[throttle] + idle_factor)/smooth_play)
         va = vehicle_accel
         if ac_threshold[throttle] != 0:
             if throttle > 8:
@@ -125,7 +153,10 @@ def acclerator():
         print("Fixed Acc:"+str(round(vehicle_accel, 5))+" Target Acc:"+str(round(va, 5))+" facX:"+str(round(facX, 5))+" factor:"+str(round(factor, 5)))
         
         game_speed += vehicle_accel
-        game_speed = video_speed
+
+        if(TESTMODE):
+            game_speed = video_speed
+
         if game_speed <= 0:
             game_speed = 0
 
@@ -143,12 +174,13 @@ def acclerator():
 def keyboard_input():
     global kch
     global throttle
+    global TESTMODE
     
     lock = threading.Lock()
     while True:
         with lock:
             kch = msvcrt.getch()
-            #print(kch)
+            print(kch)
             if kch in b'd':
                 if throttle + 1 >= 13:
                     throttle = 13
@@ -160,6 +192,9 @@ def keyboard_input():
                     throttle = 0
                 else:
                     throttle -= 1
+
+            if kch in b't':
+                TESTMODE = not bool(TESTMODE)
 
 def vplayer():
     global kch
@@ -176,6 +211,8 @@ def vplayer():
     global distance_passed
     
     global fileName
+    global TESTMODE
+
     video = cv2.VideoCapture(fileName)
     font = cv2.FONT_HERSHEY_TRIPLEX
     length = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -191,29 +228,136 @@ def vplayer():
                 frame = copy.copy(current_frame)
                 cv2.waitKey(1)
                 cv2.putText(frame, '['+StaStart+' -> '+StaEnd+'] #'+TrainNo+': ' + str(int(distance) - int(fcount/fps_default)) + 'm',(50, 50), font, 1, (0, 0, 255))
-                cv2.putText(frame, 'Throttle: '+ str(ac_name[throttle]) +' Accleration: ' + str(round(vehicle_accel, 5)) + ' Speed:' + str(game_speed)+' km/h',(50, 1000), font, 1, (0, 0, 255))
+                if(TESTMODE):
+                    cv2.putText(frame, '(TESTMODE) Throttle: '+ str(ac_name[throttle]) +' Accleration: ' + str(round(vehicle_accel, 5)) + ' Speed:' + str(game_speed)+' km/h',(50, 1000), font, 1, (0, 0, 255))
+                else:
+                    cv2.putText(frame, 'Throttle: '+ str(ac_name[throttle]) +' Accleration: ' + str(round(vehicle_accel, 5)) + ' Speed:' + str(game_speed)+' km/h',(50, 1000), font, 1, (0, 0, 255))
                 cv2.imshow(frameName,frame)
 
         else:
-            y_coord = 400
+
             time_delay = 1 / fps
-            distance_passed += (game_speed*1000/3600)*time_delay
+            distance_passed += (video_speed*1000/3600)*time_delay
             cv2.putText(frame, '['+StaStart+' -> '+StaEnd+'] #'+TrainNo+': ' + str(int(distance) - int(distance_passed)) + 'm',(50, 50), font, 1, (0, 0, 255))
-            cv2.putText(frame, 'Throttle: '+ str(ac_name[throttle]) +' Accleration: ' + str(round(vehicle_accel, 5)) + ' Speed:' + str(game_speed)+' km/h Video Speed: '+str(video_speed)+' km/h', (50, 1000), font, 1, (0, 255, 255))
+            if(TESTMODE):
+                cv2.putText(frame, '(TESTMODE) Throttle: '+ str(ac_name[throttle]) +' Accleration: ' + str(round(vehicle_accel, 5)) + ' Speed:' + str(game_speed)+' km/h Video Speed: '+str(video_speed)+' km/h', (50, 1000), font, 1, (0, 255, 255))
+            else:
+                cv2.putText(frame, 'Throttle: '+ str(ac_name[throttle]) +' Accleration: ' + str(round(vehicle_accel, 5)) + ' Speed:' + str(game_speed)+' km/h Video Speed: '+str(video_speed)+' km/h', (50, 1000), font, 1, (0, 255, 255))
 
             if signal_mapping:
+                sg = signalImage()
+                xOffset = 50
+                yOffset = 100
+                margin = 10
+
+                sigX = xOffset
+                sigY = yOffset
+
+                tslX = sigX + margin + sg.sl0.shape[1]
+                tslY = sigY
+
+                gslX = tslX + margin + sg.sl1.shape[1]
+                gslY = sigY
+
+                #----------------
+                agX = sigX
+                agY = sigY + margin + sg.sl0.shape[0]
+
+                disX = agX + margin + sg.dep0.shape[1]
+                disY = agY
+
+                depX = disX + margin + sg.dis0.shape[1]
+                depY = disY
+
+                avrX = depX + margin + sg.block0.shape[1]
+                avrY = depY
+
+                blockX = avrX + margin + sg.block0.shape[1]
+                blockY = avrY
+
                 for index, signals in enumerate(signal_mapping[mfloor(fcount/fps_default)]):
-                    #print('Index: '+str(index)+' Signal:'+str(signal_name[index])+': '+str(str(signals)))
+                    #print('Index: '+str(index)+' Signal:'+str(signal_name[index])+': '+str(signals))
                     if(signals != 'NULL'):
-                        if(signals == 'ALL-RIGHT'):
-                            cv2.putText(frame, str(signal_name[index])+': ' + str(signals), (50, y_coord), font, 1, (0, 255, 0))
-                        elif(signals == 'CAUTION'):
-                            cv2.putText(frame, str(signal_name[index])+': ' + str(signals), (50, y_coord), font, 1, (0, 255, 255))
-                        elif(signals == 'DANGER'):
-                            cv2.putText(frame, str(signal_name[index])+': ' + str(signals), (50, y_coord), font, 1, (0, 0, 255))
-                        else:
-                            cv2.putText(frame, str(signal_name[index])+': ' + str(signals), (50, y_coord), font, 1, (255, 0, 255))
-                        y_coord += 50
+                        #All Green
+                        if(index == 0 and signals != 'NULL'):
+                            print('All Green: '+str(signals))
+                            if(signals == 'ALL-RIGHT'):
+                                frame[agY: agY + sg.dep1.shape[0], agX: agX + sg.dep1.shape[1]] = sg.dep1
+
+                        #Departure
+                        if(index == 1 and signals != 'NULL'):
+                            print('Departure: '+str(signals))
+                            if(signals == 'ALL-RIGHT'):
+                                frame[depY: depY + sg.block1.shape[0], depX: depX + sg.block1.shape[1]] = sg.block1
+                            elif(signals == 'CAUTION'):
+                                frame[depY: depY + sg.block2.shape[0], depX: depX + sg.block2.shape[1]] = sg.block2
+                            elif(signals == 'DANGER'):
+                                frame[depY: depY + sg.block3.shape[0], depX: depX + sg.block3.shape[1]] = sg.block3
+
+                        #Arrival
+                        if(index == 2 and signals != 'NULL'):
+                            print('Arrival: '+str(signals))
+                            if(signals == 'ALL-RIGHT'):
+                                frame[avrY: avrY + sg.block1.shape[0], avrX: avrX + sg.block1.shape[1]] = sg.block1
+                            elif(signals == 'CAUTION'):
+                                frame[avrY: avrY + sg.block2.shape[0], avrX: avrX + sg.block2.shape[1]] = sg.block2
+                            elif(signals == 'DANGER'):
+                                frame[avrY: avrY + sg.block3.shape[0], avrX: avrX + sg.block3.shape[1]] = sg.block3
+
+                        #distance signal
+                        if(index == 4 and signals != 'NULL'):
+                            print('Distance: '+str(signals))
+                            if(signals == 'ALL-RIGHT'):
+                                frame[disY: disY + sg.dis0.shape[0], disX: disX + sg.dis0.shape[1]] = sg.dis0
+                            elif(signals == 'CAUTION'):
+                                frame[disY: disY + sg.dis1.shape[0], disX: disX + sg.dis1.shape[1]] = sg.dis1
+                            elif(signals == 'DANGER'):
+                                frame[disY: disY + sg.dis2.shape[0], disX: disX + sg.dis2.shape[1]] = sg.dis2
+                                
+                        #block signal
+                        if(index == 3 and signals != 'NULL'):
+                            print('Block: '+str(signals))
+                            if(signals == 'ALL-RIGHT'):
+                                frame[blockY: blockY + sg.block1.shape[0], blockX: blockX + sg.block1.shape[1]] = sg.block1
+                            elif(signals == 'CAUTION'):
+                                frame[blockY: blockY + sg.block2.shape[0], blockX: blockX + sg.block2.shape[1]] = sg.block2
+                            elif(signals == 'DANGER'):
+                                frame[blockY: blockY + sg.block3.shape[0], blockX: blockX + sg.block3.shape[1]] = sg.block3
+                        #speed limit
+                        if(index == 6 and signals != 'NULL'):  #signal speed
+                            if(signals < 100):
+                                cv2.putText(sg.sl1, str(signals),(20, 65), font, 1.5, (0, 0, 0))
+                            else:
+                                cv2.putText(sg.sl1, str(signals),(20, 65), font, 1.2, (0, 0, 0))
+                            print('Signal speed')
+                            frame[sigY: sigY + sg.sl1.shape[0], sigX: sigX + sg.sl1.shape[1]] = sg.sl1
+                        elif((index == 7 and signals != 'NULL') and signal_mapping[mfloor(fcount/fps_default)][8] != 'NULL'):  #seperate track speed
+                            if(signals < 100):
+                                cv2.putText(sg.sl2, str(signals),(20, 65), font, 1.5, (0, 0, 0))
+                            else:
+                                cv2.putText(sg.sl2, str(signals),(20, 65), font, 1.2, (0, 0, 0))
+
+                            if(signal_mapping[mfloor(fcount/fps_default)][8] < 100):
+                                cv2.putText(sg.sl2, str(signal_mapping[mfloor(fcount/fps_default)][8]),(20, 165), font, 1.5, (0, 0, 0))
+                            else:
+                                cv2.putText(sg.sl2, str(signal_mapping[mfloor(fcount/fps_default)][8]),(20, 165), font, 1.2, (0, 0, 0))
+                            print('seperate track speed')
+                            frame[tslY: tslY + sg.sl2.shape[0], tslX: tslX + sg.sl2.shape[1]] = sg.sl2
+                        elif((index == 7 and signals == 'NULL') and signal_mapping[mfloor(fcount/fps_default)][8] != 'NULL'):  #only general track speed
+                            print('only general track speed')
+                            if(signals < 100):
+                                cv2.putText(sg.sl0, str(signals),(20, 65), font, 1.5, (0, 0, 0))
+                            else:
+                                cv2.putText(sg.sl0, str(signals),(20, 65), font, 1.2, (0, 0, 0))
+                            frame[gslY: gslY + sg.sl0.shape[0], gslX: gslX + sg.sl0.shape[1]] = sg.sl0
+                        elif(signal_mapping[7] != 'NULL' and signal_mapping[mfloor(fcount/fps_default)][8] == 'NULL'):  #only tilt track speed(should never reach this part
+                            print('only tilt track speed')
+                            if(signal_mapping[mfloor(fcount/fps_default)][7] < 100):
+                                cv2.putText(sg.sl1, str(signal_mapping[mfloor(fcount/fps_default)][7]),(20, 65), font, 1.5, (0, 0, 0))
+                            else:
+                                cv2.putText(sg.sl1, str(signal_mapping[mfloor(fcount/fps_default)][7]),(20, 65), font, 1.2, (0, 0, 0))
+                            frame[sigY: sigY + sg.sl1.shape[0], sigX: sigX + sg.sl1.shape[1]] = sg.sl1
+                del sg
                 
             cv2.imshow(frameName, frame)
             cv2.waitKey(1)
@@ -226,7 +370,7 @@ def vplayer():
         
     video.release()
     cv2.destroyAllWindows()
-
+"""
 def parse_text(im, chinese, pos, color):
     img_PIL = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
     font = ImageFont.truetype('simsun.ttc', 35)
@@ -238,7 +382,7 @@ def parse_text(im, chinese, pos, color):
     draw.text(position, chinese, font=font, fill=fillColor)
     img = cv2.cvtColor(np.asarray(img_PIL), cv2.COLOR_RGB2BGR)
     return img
-
+"""
 
 if FilesConf['SpeedMap']:
     try:
